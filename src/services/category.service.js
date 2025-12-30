@@ -1,28 +1,30 @@
-const categoryRepository = require("../repositories/category.repository");
-const ServiceResponse = require("..models/serviceResponse");
-const CategoryDto = require("../dtos/category.dto");
+const { poolPromise } = require("../database"); 
 
-class CategoryService {
-  async getAllCategory() {
-    const response = new ServiceResponse();
-
-    const categories = await categoryRepository.getAll();
-
-    if (categories && categories.length > 0) {
-      const categoriesDto = categories.map(
-        category => new CategoryDto(category)
-      );
-
-      response.data = categoriesDto;
-      response.success = true;
-      response.message = "Categories retrieved successfully";
-    } else {
-      response.success = false;
-      response.message = "No record found!";
-    }
-
-    return response;
+async function getAllCategories() {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query("SELECT * FROM Categories");
+    return result.recordset;
+  } catch (err) {
+    console.error(err);
+    return [];
   }
 }
 
-module.exports = new CategoryService();
+async function addCategory(name, description) {
+  try {
+    const pool = await poolPromise;
+    await pool.request()
+      .input("name", name)
+      .input("description", description)
+      .query(`
+        INSERT INTO Categories (CategoryName, CategoryDescription)
+        VALUES (@name, @description)
+      `);
+    console.log("Category added");
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+module.exports = { getAllCategories, addCategory };
