@@ -21,9 +21,11 @@ async function addCategory(name, description) {
         INSERT INTO Categories (CategoryName, CategoryDescription)
         VALUES (@name, @description)
       `);
-    console.log("Category added");
+    console.log("Category added successfully");
+    return { success: true, message: "Category added successfully" }; // ✅ RETURN!
   } catch (err) {
     console.error(err);
+    return { success: false, message: err.message };
   }
 }
 

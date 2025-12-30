@@ -12,13 +12,33 @@ const config = {
   }
 };
 
-const poolPromise = sql.connect(config)
+
+// Create a pool and export it
+const poolPromise = new sql.ConnectionPool(config)
+  .connect()
   .then(pool => {
-    console.log("Connected to SQL Server successfully");
+    console.log("✅ Connected to SQL Server");
     return pool;
   })
   .catch(err => {
-    console.error("DB connection failed:", err);
+    console.error("❌ DB connection failed:", err);
   });
 
 module.exports = { sql, poolPromise };
+
+
+// CREATE TABLE Categories (
+//     CategoryId INT IDENTITY(1,1) PRIMARY KEY,
+//     CategoryName NVARCHAR(50) NOT NULL,
+//     CategoryDescription NVARCHAR(MAX)
+// );
+
+// CREATE TABLE Products (
+//     ProductId INT IDENTITY(1,1) PRIMARY KEY,
+//     ProductName NVARCHAR(50) NOT NULL,
+//     ProductDescription NVARCHAR(MAX) NOT NULL,
+//     ProductPrice DECIMAL(10,2) NOT NULL,
+//     CategoryId INT NOT NULL,
+//     CONSTRAINT FK_Products_Categories
+//         FOREIGN KEY (CategoryId) REFERENCES Categories(CategoryId)
+// );

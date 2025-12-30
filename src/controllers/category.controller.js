@@ -10,6 +10,16 @@ class CategoryController {
 
     return res.status(200).json(response);
   }
+
+  async addCategory(req, res) {
+    const { name, description } = req.body;
+    const response = await categoryService.addCategory(name, description);
+
+    if (!response.success) {
+      return res.status(500).json(response);
+    }
+    return res.status(201).json(response);
+  } 
 }
 
 module.exports = new CategoryController();
