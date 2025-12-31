@@ -1,29 +1,36 @@
-const sql = require("mssql");
+const { Sequelize } = require('sequelize');
 
-const config = {
-  user: "sa",
-  password: "PmcIndia@123",
-  server: "PMCLAP1613-1222",   // same machine
-  database: "ShopDB",
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-    networkLibrary: "DBMSSOCN" // Named Pipes
+const sequelize = new Sequelize("ShopDB", "sa", "PmcIndia@123", {
+    host: "PMCLAP1613-1222",
+    dialect: "mssql",
+    dialectOptions: {
+        options: {
+            encrypt: false,
+            trustServerCertificate: true,
+        },
+    },
+    logging: false, // Set to console.log to see SQL queries
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+  },
+});
+
+// Test connection
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("✅ Database connection established successfully.");
+  } catch (error) {
+    console.error("❌ Unable to connect to the database:", error);
   }
 };
 
+testConnection();
 
-// Create a pool and export it
-const poolPromise = new sql.ConnectionPool(config)
-  .connect()
-  .then(pool => {
-    return pool;
-  })
-  .catch(err => {
-    console.error("❌ DB connection failed:", err);
-  });
-
-module.exports = { sql, poolPromise };
+module.exports = sequelize;
 
 
 // CREATE TABLE Categories (

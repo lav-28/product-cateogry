@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const categoryController = require("../controllers/category.controller");
 
+const{validateCategory,
+    validateCategoryId,
+    handleValidationErrors} = require("../middleware/category.validator");
+
 router.get("/GetAllCategories", (req, res) => {
   categoryController.getAllCategories(req, res)
 });

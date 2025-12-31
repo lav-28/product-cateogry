@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "express": "^5.2.1",
+    "express-validator": "^7.3.1",
     "mssql": "^12.2.0",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "tedious": "^19.2.0"
   }
 }
