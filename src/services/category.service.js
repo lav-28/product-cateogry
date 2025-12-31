@@ -56,4 +56,77 @@ async function getCategoryById(categoryId) {
   }
 }
 
-module.exports = { getAllCategories, addCategory, getCategoryById };
+async function updateCategory(categoryId, name, description) {
+  try {
+    const pool = await poolPromise;
+
+    const categoryExists = await pool.request()
+      .input("categoryId", categoryId)
+      .query("SELECT COUNT(*) AS count FROM Categories WHERE CategoryId = @categoryId");
+
+    if (categoryExists.recordset[0].count === 0) {
+      return {
+        success: false,
+        message: "Category not found"
+      };
+    }
+
+    const duplicateCheck = await pool.request()
+      .input("name", name)
+      .query("SELECT COUNT(*) AS count FROM Categories WHERE CategoryName = @name");
+
+    if (duplicateCheck.recordset[0].count > 0) {
+      return {
+        success: false,
+        message: "Category already exists"
+      };
+    }
+
+    const result = await pool.request()
+    
+      .input("categoryId", categoryId)
+      .input("name", name)
+      .input("description", description)
+      .query("UPDATE Categories SET CategoryName = @name, CategoryDescription = @description WHERE CategoryId = @categoryId");
+    return { 
+      success: true, 
+      message: "Category updated successfully" 
+    };
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+async function deleteCategory(categoryId) {
+  try{
+    const pool = await poolPromise;
+
+    const categoryExists = await pool.request()
+      .input("categoryId", categoryId)
+      .query("SELECT COUNT(*) AS count FROM Categories WHERE CategoryId = @categoryId");
+
+    if (categoryExists.recordset[0].count === 0) {
+      return {
+        success: false,
+        message: "Category not found"
+      };
+    }
+
+    await pool.request()
+      .input("categoryId", categoryId)
+      .query("DELETE FROM Categories WHERE CategoryId = @categoryId");
+    return { 
+      success: true, 
+      message: "Category deleted successfully" 
+    };
+  }catch(err){
+    console.error(err);
+    return { 
+      success: false, 
+      message: err.message 
+    };
+  }
+}
+
+module.exports = { getAllCategories, addCategory, getCategoryById, updateCategory, deleteCategory };

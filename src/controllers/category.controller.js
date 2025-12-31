@@ -68,8 +68,45 @@ class CategoryController {
 
     return res.status(201).json(result);
   } 
+
+  async updateCategory(req, res) {
+    const categoryId = req.params.id;
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Category name is required.",
+      });
+    }
+    if (!description) {
+      return res.status(400).json({
+        success: false,
+        message: "Category description is required.",
+      });
+    }
+
+    const result = await categoryService.updateCategory(categoryId, name, description);
+
+    if (!result.success) {
+      const status = result.message === "Category already exists" ? 409 : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.status(200).json(result);
+  }
+
+  async deleteCategory(req, res) {
+    const categoryId = req.params.id;
+    const result = await categoryService.deleteCategory(categoryId);
+
+    if (!result.success) {
+      const status = result.message === "Category not found" ? 404 : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.status(200).json(result);
+  }
 }
-
-
 
 module.exports = new CategoryController();
