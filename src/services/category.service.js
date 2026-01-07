@@ -1,4 +1,3 @@
-const { poolPromise } = require("../database"); 
 const Category = require("../models/category.model");
 const { Op } = require("sequelize");
 

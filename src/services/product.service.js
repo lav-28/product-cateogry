@@ -1,72 +1,114 @@
-const { poolPromise } = require("../database");
+const { Category } = require("../models");
+const Product = require("../models/product.model");
+const { Op } = require("sequelize");
 
-async function getAllProducts() {
-  try {
-    const pool = await poolPromise;
-    const result = await pool.request().query("SELECT * FROM Products");
-    return result.recordset;
-  } catch (err) {
-    console.error(err);
-    return [];
-  }
-}
-
-async function getProductById(productId) {
-  try {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input("productId", productId)
-      .query("SELECT * FROM Products WHERE ProductId = @productId");
-    return result.recordset[0];
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
-}
-
-async function addProduct(name, description, price, categoryId) {
-  try {
-    const pool = await poolPromise;
-
-    const categoryCheck = await pool.request()
-      .input("categoryId", categoryId)
-      .query("SELECT COUNT(*) AS count FROM Categories WHERE CategoryId = @categoryId");
-
-    if (categoryCheck.recordset[0].count === 0) {
-      return {
-        success: false,
-        message: "Category does not exist"
-      };
+class ProductService {
+  async getAllProducts() {
+    try {
+      const products = await Product.findAll();
+      return products;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    const duplicateCheck = await pool.request()
-      .input("name", name)
-      .input("categoryId", categoryId)
-      .query("SELECT COUNT(*) AS count FROM Products WHERE ProductName = @name AND CategoryId = @categoryId");
+  async getProductById(productId) {
+    try {
+      const product = await Product.findByPk(productId);
+      return product;
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    if (duplicateCheck.recordset[0].count > 0) {
+  async addProduct(name, description, price, categoryId) {
+    try {
+      const categoryExists = await Category.findByPk(categoryId);
+      if (!categoryExists) {
+        return {
+          success: false,
+          message: "Category does not exist",
+        };
+      }
+      
+      const product = await Product.create({
+        ProductName: name,
+        ProductDescription: description,
+        ProductPrice: price,
+        CategoryId: categoryId
+      });
       return {
-        success: false,
-        message: "Product already exists in this category"
+        success: true,
+        message: "Product added successfully",
       };
-    }  
-    await pool.request()
-      .input("name", name)
-      .input("description", description)
-      .input("price", price)
-      .input("categoryId", categoryId)
-      .query("INSERT INTO Products (ProductName, ProductDescription, ProductPrice, CategoryId) VALUES (@name, @description, @price, @categoryId)");
-    return { 
-        success: true, 
-        message: "Product added successfully" 
-    };
-  } catch (err) {
-    console.error(err);
-    return { 
-        success: false, 
-        message: err.message 
-    };
+    } catch (error) {
+      if(error.name === 'SequelizeUniqueConstraintError'){
+        return {
+          success: false,
+          message: "Product already exists",
+        };
+      }
+      throw error;
+    }
+  }
+
+  async updateProduct(productId, name, description, price, categoryId) {
+    try {
+      const product = await Product.findByPk(productId);
+      if (!product) {
+        return {
+          success: false,
+          message: "Product not found.",
+        };
+      }
+      const duplicate = await Product.findOne({
+        where: {
+          ProductName: name,
+          CategoryId: categoryId,
+          ProductId: { [Op.ne]: productId },
+        },
+      });
+      if (duplicate) {
+        return {
+          success: false,
+          message: "Product already exists",
+        };
+      }
+
+      await product.update({
+        ProductName: name,
+        ProductDescription: description,
+        ProductPrice: price,
+        CategoryId: categoryId
+      });
+
+      return {
+        success: true,
+        message: "Product updated successfully",
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  async deleteProduct(productId) {
+    try {
+      const product = await Product.findByPk(productId);
+      if (!product) {
+        return {
+          success: false,
+          message: "Product not found",
+        };
+      }
+
+      await product.destroy();
+      return {
+        success: true,
+        message: "Product deleted successfully",
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
-module.exports = { getAllProducts, getProductById, addProduct };
+module.exports = new ProductService();
